@@ -1,0 +1,186 @@
+一、shell简介
+------------
+	用户
+	 |	
+	终端  （相当于bash的接口）
+	 |
+	shell（壳） bash 大多数Linux系统默认的shell环境
+	 |
+	内核
+用户通过终端输入命令，提交给shell，再调用内核中的系统功能对命令进行执行。shell环境是用户使用linux的桥梁，它使得用户能与操作系统的核心功能进行交互。
+
+shell的两种执行命令的方式：
+交互式:解释执行用户的命令，用户输入一条命令，shell就执行一条。
+批处理:用户事先写一个shell脚本（scripts）,其中有很多命令，让shell一次把这些命令执行完，而不用一条一条的敲命令。
+二、shell变量
+------------
+1.定义变量
+ 变量名=“变量内容”
+如：myname=“lily”
+注意事项：
+	1）变量名和等号之间以及等号和变量内容之间不能有空格
+	2）变量名只能包含数字、字母和下划线，且必须以字母开头
+	3）变量名不能使用bash里的关键字
+
+2.使用变量
+ $变量名  	--获取变量内容
+如：echo $myname	
+   或 echo ${myname}
+   echo "myname is $myname"
+
+3.变量类型
+  shell变量是由shell程序设置的特殊变量。shell变量中有一部分是环境变量，有一部分是局部变量，这些变量保证了shell的正常运行。
+局部变量：局部变量是在脚本或命令中定义的，仅在当前shel实例中有效，其他shell启动的程序不能访问局部变量。
+环境变量：所有程序，包括shell启动的程序，都能访问环境变量，有些程序需要环境变量来保证其正常运行。必要的时候shell脚本也可以定义环境变量。
+特殊变量：除了数字、字母和下划线，还包含其他字符的变量成为特殊变量，如下：
+	$0	当前脚本
+	$n	传递给脚本或函数的参数，n是一个数字，表示第几个参数，如，第一个参数是$1，第二个参数是$2
+	$#	传递给脚本或函数的参数个数
+	$*	传递给脚本或函数的所有参数(强调整体)
+	$@	传递给脚本或函数的所有参数（强调独立个体）
+	$?	上个命令的退出状态，上一条命令执行成功则返回0，失败返回非0的数值
+	$$	当前shell进程id。对于shell脚本而言就是这个脚本所在的进程id
+for example:
+#vim test1.sh
+#!/bin/bash
+for i in "$@"
+do
+        echo "$i"
+done
+#sh test1.sh 1 2 3 4
+1
+2
+3
+4
+
+vim test2.sh
+#!/bin/bash
+
+for i in "$*"
+do
+        echo "$i"
+done
+#sh test2.sh 1 2 3 4
+1 2 3 4
+
+4.read命令
+read命令将接收到的输入的数据放入一个标准变量中。
+echo -n “enter your name:"	--参数-n的作用是不换行，echo默认是换行的
+read name
+echo "hello $name"
+read -p "enter your name： " name	--参数-p允许在read命令行中直接指定一个提示
+echo "hello $name"
+
+三、shell运算符
+--------------
+1.算数运算符
+   +      —     *      /       %       =        = =        ！= 	    ++	  --
+   加     减    乘      除     取余     赋值      等于       不等于	   自加	自减
+i++ 相当于 i+1
+i-- 相当于 i-1
+i+=2 相当于 i=i+2
+变量运算
+a=4
+b=5
+let c=$a+$b	
+或 c=$((a+b))	--两个括号，不能少
+或 c=$[a+b]
+或 c=` expr $a + $b `	--注意空格
+或 c=$( expr $a + $b )
+然后 echo $c  打印出计算的值
+以上的运算方法（ let、(()) 、[] 、expr ）只能计算整数，无法计算小数
+2.逻辑判断与顺序
+；	前面执行完，不管成功与否，都执行后面的，没有逻辑关系
+&&	前面执行成功，才执行后面的；前面执行不成功，后面不执行
+||	前面执行失败，才执行后面的；前面执行成功，后面不执行
+3.条件判断
+语法:   格式1： test 测试表达式	--不常用
+	   例： test -f 1.txt && echo 1 || echo 0
+       格式2： [测试表达式]	--常用
+	   例： [ -f 1.txt ]&& echo 1 || echo 0
+       格式3： [[测试表达式]]	--不常用
+	   例： [[ -f 1.txt ]]&& echo 1 || echo 0
+4.关于文件的判断
+-e	是否存在
+-d	是否为目录
+-f	是否为普通文件
+-c	是否为字符设备文件
+-b	是否为块设备文件
+-p	是否为管道文件
+-L	是否为链接文件
+-S	socket文件
+-u	文件的uid（root用户）是否设置了s位
+-g	文件的gid（组用户）是否设置了s位
+-k	文件是否设置了t位，
+-r	是否可读
+-w	是否可写
+-x	是否可执行
+-s	是否为空文件，不空为真，空为假
+#vim file.sh
+#!/bin/bash
+read -p "input file  "   file
+ [ -e $file ]&& echo "文件存在" ||echo "文件不存在"
+ [ -d $file ]&& echo "$file 是一个目录" || echo "$file 不是目录"
+ [ -f $file ]&& echo "$file 是一个普通文件" || echo "$file 不是普通文件"
+ [ -u $file ]&& echo "$file 的uid设置了s位" || echo "$file 的uid没有设置s位"
+ [ -x $file ]&& echo "$file 可执行" || echo "$file 不可执行"
+ [ -w $file ]&& echo "$file 可写" || echo "$file 不可写"
+ [ -s $file ]&& echo "$file 不是空文件" || echo "$file 是空文件"
+
+5.两个文件的比较判断
+file1 -nt file2 	--比较file1是否比file2新
+file1 -ot file2		--比较file1是否比file2旧
+file1 -ef file2		--比较是否为同一个文件
+# [ test.sh  -nt test1.sh  ]&& echo "test.sh新" || echo "test1.sh新"
+# [  test1.sh -ot test.sh  ]&& echo "test1.sh旧" || echo "test.sh旧"
+# [  test1.sh -ef test.sh  ]&& echo "相同文件" ||echo "不同文件"
+
+6.整数之间的判断
+-eq	等于
+-ne	不等于
+-gt	大于
+-lt	小于
+-ge	大于等于
+-le	小于等于
+#vim num.sh
+#!/bin/bash
+[ $1 -eq $2 ]&& echo "$1 等于$2" ||echo "$1 不等于$2"
+[ $1 -gt $2 ]&& echo "$1 大于$2" ||echo "$1 不大于$2"
+
+#sh num.sh 2 4
+#!/bin/bash
+read -p "input num1  " num1
+read -p "input num2  " num2
+[ $num1 -eq $num2 ]&& echo "$num1 等于$num2" ||echo "$num1 不等于$num2"
+[ $num1 -gt $num2 ]&& echo "$num1 大于$num2" ||echo "$num1 不大于$num2"
+
+7.字符串之间的判断
+-z	是否为空字符
+！非
+例：
+# a=
+# [ -z $a ] && echo "a的值为空" || echo $a
+
+8.逻辑判断
+-a	两个条件同时满足才为真
+-o	者满足其一就为真
+例：
+[ -e 1.txt -a -f 1.txt ]&& echo "1.txt存在且是一个普通文件" || echo "1.txt文件不存在或者1.txt文件不是一个普通文件"
+
+四、shell判断语句
+---------------
+1. if语句
+1.1 单分支结构
+if [表达式]
+then	--可以单独一行，也可以在if行加分号再接then
+    执行语句		--(表达式为真执行的语句）
+fi
+
+--举例说明：
+if [ $1 -eq $2 ]
+then 
+    echo "$1等于$2"
+else
+    echo "$1不等于$2"
+fi
+
